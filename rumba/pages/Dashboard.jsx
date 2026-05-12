@@ -1,26 +1,24 @@
+// ============================================
+// Dashboard.jsx — conectado a la API
+// ============================================
 
-// Keyframes inyectados globalmente una sola vez
+// Keyframes inyectados una sola vez
 if (typeof document !== "undefined" && !document.getElementById("rumba-keyframes")) {
   const style = document.createElement("style");
   style.id = "rumba-keyframes";
   style.textContent = `
     @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes popIn   { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
   `;
   document.head.appendChild(style);
 }
-
-// ============================================
-// Dashboard.jsx — contenedor principal
-// ============================================
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/global.css";
 import "../styles/ModalStyle.css";
 import logo from "../assets/logo.png";
-import { getSession, logout } from "../utils/login";
+import { getSession, logout, verificarSesion } from "../utils/login";
 import { useRumbas } from "../hooks/useRumbas";
 import { useClientes } from "../hooks/useClientes";
 import RumbasSection from "../components/RumbasSection";
@@ -33,27 +31,42 @@ export default function Dashboard() {
   const [cbAbierto, setCbAbierto] = useState(false);
   const navigate = useNavigate();
 
-  // 🔐 Proteger ruta
+  // Hooks conectados a la API
+  const { rumbas, metricas, cargando: cargandoRumbas, crearRapido, actualizar, eliminar, completar } = useRumbas();
+  const { clientes, cargando: cargandoClientes, error: errorClientes, agregarCliente, actualizarCliente, eliminarCliente } = useClientes();
+
+  // 🔐 Verificar sesión contra la API al montar
   useEffect(() => {
     const session = getSession();
-    if (!session) navigate("/login");
-    else setUser(session);
+    if (!session) {
+      navigate("/login");
+      return;
+    }
+    setUser(session);
+
+    // Verificar que el token siga válido
+    verificarSesion().then(u => {
+      if (!u) navigate("/login");
+      else setUser(u);
+    });
   }, []);
 
-  const { rumbas, crearRapido, actualizar, eliminar, completar, metricas } = useRumbas(user?.id);
-  const { clientes, agregarCliente } = useClientes(user?.id);
-
-  // Crear cliente en el momento desde RumbaDetalle
-  const handleCrearCliente = (callback) => {
+  // Crear cliente inline desde RumbaDetalle
+  const handleCrearCliente = async (callback) => {
     const nombre = window.prompt("Nombre del cliente:");
     if (!nombre?.trim()) return;
-    const nuevo = agregarCliente({ nombre: nombre.trim(), instagram: "", telefono: "", notas: "" });
-    callback?.(nuevo);
+    const nuevo = await agregarCliente({ nombre: nombre.trim(), instagram: "", telefono: "", notas: "" });
+    if (nuevo) callback?.(nuevo);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   if (!user) return null;
 
-  const recientes = [...rumbas].sort((a, b) => b.creadoEn - a.creadoEn).slice(0, 5);
+  const recientes = [...rumbas].slice(0, 5);
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "var(--bg)", overflow: "hidden", animation: "fadeIn 0.25s ease" }}>
@@ -64,7 +77,7 @@ export default function Dashboard() {
         background: "#111113",
         padding: "24px 16px",
         borderRight: "1px solid var(--border)",
-        display: "flex", flexDirection: "column", gap: "0",
+        display: "flex", flexDirection: "column",
         overflowY: "auto"
       }}>
         <div style={{ marginBottom: "32px", paddingLeft: "8px" }}>
@@ -84,18 +97,21 @@ export default function Dashboard() {
             <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{user.name}</div>
             <div className="text-xs-muted">@{user.username}</div>
           </div>
-          <LogoutBtn onClick={() => { logout(); navigate("/login"); }} />
+          <LogoutBtn onClick={handleLogout} />
         </div>
       </aside>
 
       {/* CONTENIDO */}
-      <main key={section} style={{ flex: 1, overflowY: "auto", padding: "40px 48px", display: "flex", flexDirection: "column", gap: "32px", animation: "slideUp 0.22s ease" }}>
-
+      <main
+        key={section}
+        style={{ flex: 1, overflowY: "auto", padding: "40px 48px", display: "flex", flexDirection: "column", gap: "32px", animation: "slideUp 0.22s ease" }}
+      >
         {section === "inicio" && (
           <InicioSection
             user={user}
             metricas={metricas}
             recientes={recientes}
+            cargando={cargandoRumbas}
             onVerRumbas={() => setSection("rumbas")}
           />
         )}
@@ -103,6 +119,7 @@ export default function Dashboard() {
         {section === "rumbas" && (
           <RumbasSection
             rumbas={rumbas}
+            cargando={cargandoRumbas}
             crearRapido={crearRapido}
             actualizar={actualizar}
             eliminar={eliminar}
@@ -114,22 +131,28 @@ export default function Dashboard() {
         )}
 
         {section === "clientes" && (
-          <ClientesSection userId={user.id} rumbas={rumbas} />
+          <ClientesSection
+            rumbas={rumbas}
+            clientes={clientes}
+            cargando={cargandoClientes}
+            error={errorClientes}
+            agregarCliente={agregarCliente}
+            actualizarCliente={actualizarCliente}
+            eliminarCliente={eliminarCliente}
+          />
         )}
 
         {section === "ingresos" && <SeccionProxima titulo="Ingresos" desc="Registro de pagos y métricas mensuales." />}
         {section === "contratos" && <SeccionProxima titulo="Contratos" desc="Generación de PDFs de licencias." />}
-
       </main>
 
-      {/* CommandBar — una sola instancia, controlada desde Dashboard */}
+      {/* CommandBar — una sola instancia */}
       <CommandBar
         abierto={cbAbierto}
         onAbrir={() => setCbAbierto(true)}
         onCerrar={() => setCbAbierto(false)}
         onCrear={(nombre, tipo) => {
-          const nueva = crearRapido(nombre);
-          if (nueva && tipo && tipo !== nueva.tipo) actualizar(nueva.id, { tipo });
+          crearRapido(nombre, tipo);
           if (section !== "rumbas") setSection("rumbas");
           setCbAbierto(false);
         }}
@@ -140,8 +163,11 @@ export default function Dashboard() {
 }
 
 // --- Sección inicio ---
-function InicioSection({ user, metricas, recientes, onVerRumbas }) {
-  const CLASE_ESTADO = { "Pendiente": "available", "En progreso": "negotiation", "En revisión": "licensed", "Completado": "licensed", "Archivado": "exclusive" };
+function InicioSection({ user, metricas, recientes, cargando, onVerRumbas }) {
+  const CLASE_ESTADO = {
+    "Pendiente": "available", "En progreso": "negotiation",
+    "En revisión": "licensed", "Completado": "licensed", "Archivado": "exclusive"
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -153,27 +179,29 @@ function InicioSection({ user, metricas, recientes, onVerRumbas }) {
         <p className="text-xs-muted">Bienvenido a tu estudio digital.</p>
       </div>
 
+      {/* Métricas — vienen de la API */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
-        <MetricCard label="Ingresos del mes" value={`$${metricas.ingresosMes.toLocaleString("es-CO")}`} icon="https://img.icons8.com/material/22/4ADE80/coin-in-hand--v1.png" color="#4ADE80" />
-        <MetricCard label="Rumbas activas" value={metricas.activas} icon="https://img.icons8.com/material/22/C4B5FD/musical-notes--v1.png" color="#C4B5FD" />
-        <MetricCard label="Completadas" value={metricas.completadas} icon="https://img.icons8.com/material/22/FCD34D/checkmark--v1.png" color="#FCD34D" />
-        <MetricCard label="Urgentes" value={metricas.urgentes} icon="https://img.icons8.com/material/22/F87171/lightning-bolt--v1.png" color="#F87171" />
+        <MetricCard label="Ingresos del mes" value={`$${(metricas.ingresosMes || 0).toLocaleString("es-CO")}`} icon="https://img.icons8.com/material/22/4ADE80/coin-in-hand--v1.png" color="#4ADE80" />
+        <MetricCard label="Rumbas activas" value={metricas.activas || 0} icon="https://img.icons8.com/material/22/C4B5FD/musical-notes--v1.png" color="#C4B5FD" />
+        <MetricCard label="Completadas" value={metricas.completadas || 0} icon="https://img.icons8.com/material/22/FCD34D/checkmark--v1.png" color="#FCD34D" />
+        <MetricCard label="Urgentes" value={metricas.urgentes || 0} icon="https://img.icons8.com/material/22/F87171/lightning-bolt--v1.png" color="#F87171" />
       </div>
 
+      {/* Actividad reciente */}
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
           <h2 style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.3px" }}>Actividad reciente</h2>
-          <button onClick={onVerRumbas} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 500, color: "var(--red-400)", fontFamily: "Inter,sans-serif" }}>
+          <button onClick={onVerRumbas} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 500, color: "var(--red-400)", fontFamily: "Inter, sans-serif" }}>
             Ver todas →
           </button>
         </div>
 
-        {recientes.length === 0 ? (
-          <div style={{
-            background: "var(--bg-card)", border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)", padding: "40px",
-            textAlign: "center", color: "var(--text-muted)", fontSize: "13px"
-          }}>
+        {cargando ? (
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "40px", textAlign: "center", color: "var(--text-muted)", fontSize: "13px" }}>
+            Cargando...
+          </div>
+        ) : recientes.length === 0 ? (
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "40px", textAlign: "center", color: "var(--text-muted)", fontSize: "13px" }}>
             Aún no tienes rumbas. Presiona{" "}
             <span className="kbd" style={{ fontSize: "10px" }}>Ctrl+K</span>{" "}
             para crear la primera.
@@ -185,7 +213,7 @@ function InicioSection({ user, metricas, recientes, onVerRumbas }) {
                 display: "grid", gridTemplateColumns: "1fr 1fr 1fr 120px",
                 padding: "12px 20px", alignItems: "center",
                 borderBottom: i === recientes.length - 1 ? "none" : "1px solid var(--border)",
-                fontSize: "13px", gap: "8px"
+                fontSize: "13px", gap: "8px", animation: "slideUp 0.18s ease"
               }}>
                 <div>
                   <div className="text-bold-sm">{r.nombre}</div>
@@ -203,7 +231,7 @@ function InicioSection({ user, metricas, recientes, onVerRumbas }) {
   );
 }
 
-// --- Componentes de soporte ---
+// --- Componentes internos ---
 function SidebarItem({ label, icon, active, onClick }) {
   const [hover, setHover] = useState(false);
   return (
@@ -255,7 +283,8 @@ function MetricCard({ label, value, icon, color }) {
     <div style={{
       background: "var(--bg-card)", border: "1px solid var(--border)",
       borderRadius: "var(--radius-lg)", padding: "20px",
-      display: "flex", flexDirection: "column", gap: "12px"
+      display: "flex", flexDirection: "column", gap: "12px",
+      animation: "slideUp 0.2s ease"
     }}>
       <div style={{ width: 36, height: 36, borderRadius: "var(--radius-md)", background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <img src={icon} alt="" style={{ width: 22, height: 22 }} />

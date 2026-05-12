@@ -10,35 +10,35 @@ import RumbaDetalle from "./RumbaDetalle";
 import "../styles/ModalStyle.css";
 
 const CLASE_ESTADO = {
-  "Pendiente":   "available",
+  "Pendiente": "available",
   "En progreso": "negotiation",
   "En revisión": "licensed",
-  "Completado":  "licensed",
-  "Archivado":   "exclusive"
+  "Completado": "licensed",
+  "Archivado": "exclusive"
 };
 
 function tiempoRelativo(ts) {
   const seg = Math.floor((Date.now() - ts) / 1000);
   const min = Math.floor(seg / 60);
-  const h   = Math.floor(min / 60);
-  const d   = Math.floor(h / 24);
+  const h = Math.floor(min / 60);
+  const d = Math.floor(h / 24);
   if (seg < 60) return "justo ahora";
   if (min < 60) return `hace ${min} min`;
-  if (h < 24)   return `hace ${h}h`;
-  if (d === 1)  return "hace 1 día";
-  if (d < 7)    return `hace ${d} días`;
-  if (d < 30)   return `hace ${Math.floor(d / 7)} sem.`;
+  if (h < 24) return `hace ${h}h`;
+  if (d === 1) return "hace 1 día";
+  if (d < 7) return `hace ${d} días`;
+  if (d < 30) return `hace ${Math.floor(d / 7)} sem.`;
   return `hace ${Math.floor(d / 30)} mes${Math.floor(d / 30) > 1 ? "es" : ""}`;
 }
 
 export default function RumbasSection({ userId, clientes, onCrearCliente }) {
   const { rumbas, crearRapido, actualizar, eliminar, completar } = useRumbas(userId);
 
-  const [filtro, setFiltro]        = useState("Todos");
-  const [busqueda, setBusqueda]    = useState("");
+  const [filtro, setFiltro] = useState("Todos");
+  const [busqueda, setBusqueda] = useState("");
   const [rumbaAbierta, setAbierta] = useState(null);
-  const [seleccion, setSeleccion]  = useState(new Set()); // ids seleccionados
-  const [menu, setMenu]            = useState(null);       // { id, x, y }
+  const [seleccion, setSeleccion] = useState(new Set()); // ids seleccionados
+  const [menu, setMenu] = useState(null);       // { id, x, y }
   const menuRef = useRef(null);
 
   // Cerrar menú al clicar fuera
@@ -53,9 +53,9 @@ export default function RumbasSection({ userId, clientes, onCrearCliente }) {
   // Lista filtrada
   const lista = rumbas.filter(r => {
     const pasaFiltro =
-      filtro === "Todos"    ? true :
-      filtro === "Urgentes" ? r.urgente :
-      r.tipo === filtro;
+      filtro === "Todos" ? true :
+        filtro === "Urgentes" ? r.urgente :
+          r.tipo === filtro;
     const pasaBusqueda = !busqueda ||
       r.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       (r.cliente?.nombre || "").toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -136,7 +136,7 @@ export default function RumbasSection({ userId, clientes, onCrearCliente }) {
         </div>
 
         <div className="filter-pills">
-          {["Todos","Producción","Mix & Master","Composición","Urgentes"].map(f => (
+          {["Todos", "Producción", "Mix & Master", "Composición", "Urgentes"].map(f => (
             <button key={f} className={`pill${filtro === f ? " pill-active" : ""}`} onClick={() => setFiltro(f)}>{f}</button>
           ))}
         </div>
@@ -242,7 +242,7 @@ export default function RumbasSection({ userId, clientes, onCrearCliente }) {
                 <input
                   type="checkbox"
                   checked={estaSeleccionada}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   style={{ accentColor: "var(--red-500)", cursor: "pointer" }}
                 />
               </span>
@@ -256,7 +256,7 @@ export default function RumbasSection({ userId, clientes, onCrearCliente }) {
                   <div className="text-bold-sm">
                     {r.nombre}
                     {r.urgente && <span className="badge-urgent">Urgente</span>}
-                    {r.ep      && <span className="badge-ep">{r.ep}</span>}
+                    {r.ep && <span className="badge-ep">{r.ep}</span>}
                   </div>
                   <div className="text-xs-muted beat-sub">{tiempoRelativo(r.creadoEn)}</div>
                 </div>
@@ -290,7 +290,7 @@ export default function RumbasSection({ userId, clientes, onCrearCliente }) {
                       transition: "background 0.15s, transform 0.15s"
                     }}
                     onMouseEnter={e => { e.currentTarget.style.background = "rgba(74,222,128,0.22)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(74,222,128,0.1)";  e.currentTarget.style.transform = "scale(1)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "rgba(74,222,128,0.1)"; e.currentTarget.style.transform = "scale(1)"; }}
                   >
                     <img src="https://img.icons8.com/material/10/4ADE80/checkmark--v1.png" alt="✓" style={{ width: 10, height: 10 }} />
                   </button>

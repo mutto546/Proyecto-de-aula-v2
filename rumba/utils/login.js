@@ -1,33 +1,51 @@
-const USERS_KEY = "rumba_users";
-const SESSION_KEY = "rumba_session";
+// ============================================
+// utils/login.js
+// Autenticación con JWT — reemplaza el sistema
+// anterior basado solo en localStorage
+// ============================================
 
-export function loginUser(username, password) {
-    const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+import { auth, setToken, setUser, clearToken, clearUser, getToken, getUser } from "../services/api";
 
-    const user = users.find(
-        (u) => u.username === username && u.password === password
-    );
-
-    if (!user) {
-        return { success: false, message: "Usuario o contraseña incorrectos" };
-    }
-
-    // guardar sesión
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-
-    return { success: true, message: "¡Bienvenido!" };
+// Iniciar sesión — devuelve el usuario o lanza error
+export async function login(email, password) {
+  const data = await auth.login({ email, password });
+  setToken(data.token);
+  setUser(data.user);
+  return data.user;
 }
 
-export function getSession() {
-    try {
-        const session = localStorage.getItem(SESSION_KEY);
-        return session ? JSON.parse(session) : null;
-    } catch (error) {
-        console.error("Error parsing session:", error);
-        return null;
-    }
+// Registrar — devuelve el usuario o lanza error
+export async function register({ name, username, email, password }) {
+  const data = await auth.register({ name, username, email, password });
+  setToken(data.token);
+  setUser(data.user);
+  return data.user;
 }
 
+// Cerrar sesión — borra token y usuario
 export function logout() {
-    localStorage.removeItem(SESSION_KEY);
+  clearToken();
+  clearUser();
+}
+
+// Leer sesión actual del localStorage
+export function getSession() {
+  const token = getToken();
+  const user  = getUser();
+  if (!token || !user) return null;
+  return user;
+}
+
+// Verificar que el token sigue válido contra la API
+// Útil al montar el Dashboard para detectar tokens expirados
+export async function verificarSesion() {
+  try {
+    const user = await auth.me();
+    setUser(user); // actualizar datos del usuario por si cambiaron
+    return user;
+  } catch {
+    clearToken();
+    clearUser();
+    return null;
+  }
 }

@@ -1,8 +1,10 @@
 // ============================================
-// useRumbas.js — hook central de Rumbas
+// hooks/useRumbas.js
+// Reemplaza localStorage por llamadas a la API
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { rumbas as api } from "../services/api";
 
 export function detectarTipo(texto) {
   const t = texto.toLowerCase();
@@ -15,94 +17,134 @@ export function detectarTipo(texto) {
   return "Producción";
 }
 
-export function crearRumba(nombre, overrides = {}) {
-  const now = Date.now();
-  return {
-    id:            now,
-    nombre:        nombre.trim(),
-    tipo:          detectarTipo(nombre),
-    cliente:       null,
-    estado:        "Pendiente",
-    pagado:        false,
-    montoPago:     "",           // string formateado "$100.000"
-    fechaEntrega:  "",
-    notas:         "",
-    urgente:       false,
-    ep:            "",
-    creadoEn:      now,
-    actualizadoEn: now,
-    ...overrides
-  };
-}
-
-// Formatea número a pesos colombianos: 100000 → "$100.000"
 export function formatCOP(valor) {
   const num = parseInt(String(valor).replace(/[^0-9]/g, ""), 10);
   if (isNaN(num) || num === 0) return "";
   return "$" + num.toLocaleString("es-CO");
 }
 
-// Extrae número de un string formateado: "$100.000" → 100000
 export function parseCOP(str) {
   return parseInt(String(str).replace(/[^0-9]/g, ""), 10) || 0;
 }
 
-export function useRumbas(userId) {
-  const KEY = `rumba_proyectos_${userId}`;
-  const [rumbas, setRumbas] = useState([]);
+export function useRumbas() {
+  const [rumbas, setRumbas]     = useState([]);
+  const [metricas, setMetricas] = useState({ activas: 0, completadas: 0, urgentes: 0, ingresosMes: 0 });
+  const [cargando, setCargando] = useState(true);
+  const [error, setError]       = useState(null);
+
+  // --- Cargar todas las rumbas ---
+  const cargar = useCallback(async () => {
+    try {
+      setCargando(true);
+      setError(null);
+      const data = await api.getAll();
+      setRumbas(data);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  // --- Cargar métricas ---
+  const cargarMetricas = useCallback(async () => {
+    try {
+      const data = await api.metricas();
+      setMetricas(data);
+    } catch (e) {
+      console.error("Error cargando métricas:", e.message);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!userId) return;
-    const guardado = localStorage.getItem(KEY);
-    setRumbas(guardado ? JSON.parse(guardado) : []);
-  }, [userId]);
+    cargar();
+    cargarMetricas();
+  }, []);
 
-  const persistir = (nuevas) => {
-    setRumbas(nuevas);
-    localStorage.setItem(KEY, JSON.stringify(nuevas));
-  };
-
-  const crearRapido = (nombre) => {
+  // --- Crear rápido desde command bar ---
+  const crearRapido = useCallback(async (nombre, tipoOverride) => {
     if (!nombre.trim()) return null;
-    const nueva = crearRumba(nombre);
-    const nuevas = [nueva, ...rumbas];
-    persistir(nuevas);
-    return nueva;
-  };
+    try {
+      const nueva = await api.create({
+        nombre,
+        tipo:    tipoOverride || detectarTipo(nombre),
+        estado:  "Pendiente",
+        urgente: false,
+        pagado:  false
+      });
+      setRumbas(prev => [nueva, ...prev]);
+      await cargarMetricas();
+      return nueva;
+    } catch (e) {
+      setError(e.message);
+      return null;
+    }
+  }, [cargarMetricas]);
 
-  const actualizar = (id, cambios) => {
-    persistir(rumbas.map(r =>
-      r.id === id ? { ...r, ...cambios, actualizadoEn: Date.now() } : r
-    ));
-  };
+  // --- Actualizar una rumba ---
+  const actualizar = useCallback(async (id, cambios) => {
+    try {
+      // Mapear el objeto del frontend al DTO que espera la API
+      const body = {
+        nombre:       cambios.nombre,
+        tipo:         cambios.tipo,
+        estado:       cambios.estado,
+        pagado:       cambios.pagado       ?? false,
+        montoPago:    cambios.montoPago    ?? "",
+        fechaEntrega: cambios.fechaEntrega ?? "",
+        notas:        cambios.notas        ?? "",
+        urgente:      cambios.urgente      ?? false,
+        ep:           cambios.ep           ?? "",
+        clienteId:    cambios.cliente?.id  ?? null
+      };
+      const actualizada = await api.update(id, body);
+      setRumbas(prev => prev.map(r => r.id === id ? actualizada : r));
+      await cargarMetricas();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [cargarMetricas]);
 
-  // Eliminar uno o varios ids
-  const eliminar = (ids) => {
+  // --- Marcar como completado (uno o varios) ---
+  const completar = useCallback(async (ids) => {
     const arr = Array.isArray(ids) ? ids : [ids];
-    persistir(rumbas.filter(r => !arr.includes(r.id)));
-  };
+    try {
+      await Promise.all(arr.map(id => api.completar(id)));
+      setRumbas(prev =>
+        prev.map(r => arr.includes(r.id) ? { ...r, estado: "Completado" } : r)
+      );
+      await cargarMetricas();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [cargarMetricas]);
 
-  // Marcar como completado uno o varios
-  const completar = (ids) => {
+  // --- Eliminar uno o varios ---
+  const eliminar = useCallback(async (ids) => {
     const arr = Array.isArray(ids) ? ids : [ids];
-    persistir(rumbas.map(r =>
-      arr.includes(r.id)
-        ? { ...r, estado: "Completado", actualizadoEn: Date.now() }
-        : r
-    ));
+    try {
+      if (arr.length === 1) {
+        await api.delete(arr[0]);
+      } else {
+        await api.deleteMany(arr);
+      }
+      setRumbas(prev => prev.filter(r => !arr.includes(r.id)));
+      await cargarMetricas();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [cargarMetricas]);
+
+  return {
+    rumbas,
+    metricas,
+    cargando,
+    error,
+    cargar,
+    crearRapido,
+    actualizar,
+    completar,
+    eliminar
   };
-
-  // Ingresos: suma montoPago de rumbas con pagado=true (reactivo, sin recarga)
-  const ingresosMes = rumbas
-    .filter(r => r.pagado && r.montoPago)
-    .reduce((acc, r) => acc + parseCOP(r.montoPago), 0);
-
-  const metricas = {
-    activas:     rumbas.filter(r => r.estado === "En progreso" || r.estado === "Pendiente").length,
-    completadas: rumbas.filter(r => r.estado === "Completado").length,
-    urgentes:    rumbas.filter(r => r.urgente).length,
-    ingresosMes
-  };
-
-  return { rumbas, crearRapido, actualizar, eliminar, completar, metricas, persistir };
 }

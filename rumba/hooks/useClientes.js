@@ -1,37 +1,67 @@
 // ============================================
-// useClientes.js — hook de clientes
+// hooks/useClientes.js
+// Reemplaza localStorage por llamadas a la API
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { clientes as api } from "../services/api";
 
-export function useClientes(userId) {
-  const KEY = `rumba_clientes_${userId}`;
+export function useClientes() {
   const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError]       = useState(null);
 
-  useEffect(() => {
-    if (!userId) return;
-    const guardado = localStorage.getItem(KEY);
-    setClientes(guardado ? JSON.parse(guardado) : []);
-  }, [userId]);
+  const cargar = useCallback(async () => {
+    try {
+      setCargando(true);
+      setError(null);
+      const data = await api.getAll();
+      setClientes(data);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
-  const persistir = (nuevos) => {
-    setClientes(nuevos);
-    localStorage.setItem(KEY, JSON.stringify(nuevos));
+  useEffect(() => { cargar(); }, []);
+
+  const agregarCliente = useCallback(async (datos) => {
+    try {
+      const nuevo = await api.create(datos);
+      setClientes(prev => [nuevo, ...prev]);
+      return nuevo;
+    } catch (e) {
+      setError(e.message);
+      return null;
+    }
+  }, []);
+
+  const actualizarCliente = useCallback(async (id, datos) => {
+    try {
+      const actualizado = await api.update(id, datos);
+      setClientes(prev => prev.map(c => c.id === id ? actualizado : c));
+    } catch (e) {
+      setError(e.message);
+    }
+  }, []);
+
+  const eliminarCliente = useCallback(async (id) => {
+    try {
+      await api.delete(id);
+      setClientes(prev => prev.filter(c => c.id !== id));
+    } catch (e) {
+      setError(e.message);
+    }
+  }, []);
+
+  return {
+    clientes,
+    cargando,
+    error,
+    cargar,
+    agregarCliente,
+    actualizarCliente,
+    eliminarCliente
   };
-
-  const agregarCliente = (datos) => {
-    const nuevo = { ...datos, id: Date.now(), creadoEn: Date.now() };
-    persistir([nuevo, ...clientes]);
-    return nuevo;
-  };
-
-  const actualizarCliente = (id, cambios) => {
-    persistir(clientes.map(c => c.id === id ? { ...c, ...cambios } : c));
-  };
-
-  const eliminarCliente = (id) => {
-    persistir(clientes.filter(c => c.id !== id));
-  };
-
-  return { clientes, agregarCliente, actualizarCliente, eliminarCliente, persistir };
 }
