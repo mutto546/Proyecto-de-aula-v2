@@ -1,0 +1,8 @@
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.csproj.AssemblyReference.cache
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.AssemblyInfoInputs.cache
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.AssemblyInfo.cs
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.csproj.CoreCompileInputs.cache
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\rober\OneDrive\Escritorio\RumbasAPI\obj\Debug\net10.0\RumbasAPI.MvcApplicationPartsAssemblyInfo.cache
