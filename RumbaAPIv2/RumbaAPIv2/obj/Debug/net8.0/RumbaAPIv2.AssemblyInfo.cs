@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RumbaAPIv2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da5ca7fcdce74c550137c70cbbb2ca7f3e17c522")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a9d28977bb393931a3fed4500c21c528af701961")]
 [assembly: System.Reflection.AssemblyProductAttribute("RumbaAPIv2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RumbaAPIv2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
