@@ -1,0 +1,276 @@
+/* ============================================================
+   Rumba — style2.css
+   Estilos específicos para el Dashboard:
+   - Glass cards de métricas con glow animado
+   - Mini-gráficos SVG (bar, donut, sparkline)
+   - Hero del Inicio con gradiente
+   - Sidebar con efecto vidrio
+   ============================================================ */
+
+/* Hero saludo */
+.dash-hero {
+    position: relative;
+    padding: 28px 28px 26px;
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(600px 200px at 90% -20%, rgba(220, 38, 38, 0.30), transparent 60%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    overflow: hidden;
+}
+
+.dash-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    opacity: .5;
+}
+
+.dash-hero h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 4px 0 6px;
+}
+
+/* Sidebar glass */
+.dash-sidebar {
+    width: 230px;
+    min-width: 230px;
+    padding: 24px 14px;
+    background: rgba(15, 15, 20, 0.65);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+}
+
+.dash-sidebar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(220, 38, 38, 0.35), transparent);
+}
+
+/* Métricas glass */
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 1100px) {
+    .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.metric-card {
+    position: relative;
+    padding: 18px;
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    animation: slideUp .35s ease both;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-mid);
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+}
+
+.metric-card .ring {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.metric-card .ring::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    background: conic-gradient(from 0deg, transparent, currentColor, transparent 50%);
+    opacity: .25;
+    filter: blur(6px);
+    animation: spin 6s linear infinite;
+}
+
+.metric-card .val {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.metric-card .lbl {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.metric-card .spark {
+    margin-top: 4px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Glass card genérica */
+.glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+/* Bloque de gráficos */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 1000px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.chart-card {
+    padding: 20px;
+}
+
+.chart-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.2px;
+}
+
+.chart-card .sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+/* SVG helpers */
+.bar-rect {
+    fill: url(#barGrad);
+    rx: 4;
+    transition: opacity .2s;
+    transform-origin: bottom;
+    animation: barRise .8s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.bar-rect:hover {
+    opacity: .85;
+}
+
+@keyframes barRise {
+    from {
+        transform: scaleY(0);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
+}
+
+.spark-path {
+    fill: none;
+    stroke: url(#sparkGrad);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: drawLine 1.4s ease-out forwards;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.donut-track {
+    stroke: rgba(255, 255, 255, 0.06);
+}
+
+.donut-seg {
+    transition: stroke-dashoffset 1s ease;
+    stroke-linecap: round;
+}
+
+/* Lista actividad glass */
+.activity-list {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.activity-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 130px;
+    padding: 13px 18px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    gap: 8px;
+    transition: background .15s;
+}
+
+.activity-row:last-child {
+    border-bottom: none;
+}
+
+.activity-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Botón "Ver todas" */
+.link-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--red-400);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: gap .15s, color .15s;
+}
+
+.link-btn:hover {
+    gap: 8px;
+    color: var(--red-300);
+}
