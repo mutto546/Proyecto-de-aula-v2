@@ -1,0 +1,407 @@
+/* ============================================
+   RUMBA — ModalStyle.css
+   Modales, menú contextual y formularios
+   ============================================ */
+
+/* --- OVERLAY --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+
+/* --- CAJA DEL MODAL --- */
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.modal-overlay.active .modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Scrollbar del modal */
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: var(--gray-700); border-radius: 2px; }
+
+
+/* --- HEADER DEL MODAL --- */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+
+/* --- CAMPOS --- */
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.modal-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.modal-input,
+.modal-select,
+.modal-textarea {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none;
+}
+
+.modal-input::placeholder,
+.modal-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.modal-input:focus,
+.modal-select:focus,
+.modal-textarea:focus {
+  border-color: var(--red-600);
+  background: var(--bg-card);
+}
+
+.modal-input.error {
+  border-color: var(--red-500);
+}
+
+/* Select — flecha personalizada */
+.modal-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717D' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.modal-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Textarea */
+.modal-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Mensaje de error bajo el campo */
+.modal-error {
+  font-size: 11px;
+  color: var(--red-400);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+
+/* --- GRID DE DOS COLUMNAS --- */
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-row .modal-field {
+  margin-bottom: 0;
+}
+
+
+/* --- CHECKBOXES CUSTOM — tema oscuro --- */
+
+/* Ocultar el checkbox nativo en todos los contextos de Rumba */
+.modal-checkbox-label input[type="checkbox"],
+.table-row input[type="checkbox"],
+.table-head input[type="checkbox"],
+input.cb-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  border: 1.5px solid var(--gray-600);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.modal-checkbox-label input[type="checkbox"]:hover,
+.table-row input[type="checkbox"]:hover,
+.table-head input[type="checkbox"]:hover {
+  border-color: var(--gray-400);
+}
+
+/* Checked — rojo con check */
+.modal-checkbox-label input[type="checkbox"]:checked,
+.table-row input[type="checkbox"]:checked,
+.table-head input[type="checkbox"]:checked {
+  background: var(--red-600);
+  border-color: var(--red-600);
+}
+
+.modal-checkbox-label input[type="checkbox"]:checked::after,
+.table-row input[type="checkbox"]:checked::after,
+.table-head input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 4px;
+  width: 4px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* Indeterminate (seleccionar todos parcial) */
+.table-head input[type="checkbox"]:indeterminate {
+  background: var(--bg-surface);
+  border-color: var(--red-600);
+}
+.table-head input[type="checkbox"]:indeterminate::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 2px;
+  width: 8px;
+  height: 2px;
+  background: var(--red-500);
+  border: none;
+  transform: none;
+}
+
+/* Wrapper de checkbox urgente */
+.modal-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.modal-checkbox-label:hover {
+  border-color: var(--border-mid);
+  background: var(--bg-hover);
+}
+
+.modal-checkbox-label.checked {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--red-400);
+}
+
+
+/* --- FOOTER DEL MODAL --- */
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-cancel {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--gray-600);
+}
+
+
+/* --- MENÚ CONTEXTUAL DE FILA --- */
+.row-menu {
+  position: absolute;
+  z-index: 150;
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: none;
+  animation: menuFadeIn 0.12s ease;
+}
+
+.row-menu.active {
+  display: block;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+.row-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.row-menu-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.row-menu-item.danger {
+  color: var(--red-400);
+}
+
+.row-menu-item.danger:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--red-500);
+}
+
+.row-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+
+/* --- TABLA VACÍA --- */
+.table-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+
+/* --- RESPONSIVE --- */
+@media (max-width: 600px) {
+  .modal {
+    padding: 20px;
+    border-radius: var(--radius-md);
+    max-height: 95vh;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer .btn-cancel,
+  .modal-footer .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
